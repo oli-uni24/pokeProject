@@ -1,0 +1,21 @@
+POKEDEX: Mini Kanto Pokédex
+
+#004 Charmander
+Type: Fire
+Charmander is a fire lizard.
+The fire on its tail shows its mood.
+
+#007 Squirtle
+Type: Water
+Squirtle is a water turtle.
+It sprays water from its mouth.
+
+#025 Pikachu
+Type: Electric
+Pikachu is an electric mouse.
+It stores electricity in its cheeks.
+
+#026 Raichu
+Type: Electric
+Raichu is an electric mouse.
+Its long tail is a lightning rod.

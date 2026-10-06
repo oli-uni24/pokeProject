@@ -1,5 +1,94 @@
 import sys
 
+#store variables
+pokedex = None
+
+def parse_header(header):
+    #check header is valid
+    if header[:1] != "#":
+        return None #not a valid header
+
+    #tuple unpacking
+    poke_num, space, name = header[1:].partition(" ")
+
+    if space != " " or not poke_num.isdigit() or not name.strip():
+        return None #not a valid header
+
+    #valid header - returns number and name of Pokémon
+    return int(poke_num), name.strip()
+
+
+def parse_pokedex(pokedex):
+    #ignore empty lines
+    lines = [line.strip() for line in pokedex.split("\n") if line.strip()]
+
+    #must not be empty and start with POKEDEX:
+    if not lines or lines[0][:8] != "POKEDEX:":
+        print("Invalid Pokedex: first line must be POKEDEX: "
+              "followed by a title.\n")
+        return None
+
+    title = lines[0][8:].strip()
+
+    #store Pokémon as a dictionary
+    pokemon = {}
+    names = []
+    i = 1
+
+    #pokedex must contain pokemon
+    if i >= len(lines):
+        print("Invalid Pokedex: it must contain at least one Pokemon.\n")
+        return None
+
+    #check if header is valid
+    while i < len(lines):
+        header = parse_header(lines[i])
+        if header is None:
+            print("Invalid Pokedex: expected an entry header containing the Pokémon name and number,"
+                  "(e.g. #004 Charmander).\n")
+            return None
+
+        #tuple unpacking
+        number, name = header
+        if number <= 0:
+            print("Invalid Pokedex: Pokémon number must be positive.\n")
+            return None
+        i += 1
+
+        #check type exists
+        if (i >= len(lines)) or (lines[i][:5]!="Type:"):
+            print ("Invalid Pokedex: missing Type for {name}.\n")
+            return None
+
+        #check valid number of types
+        types = [t.strip() for t in lines[i][6:].split("/")]
+        if len(types) > 2 or "" in types:
+            print ("Invalid Pokedex: incorrect number of types for {name}.\n")
+            return None
+        i += 1
+
+        #description - everything left up to net header or eof
+        description = []
+        while i < len(lines) and parse_header(lines[i]) is None:
+            description.append(lines[i].strip())
+            i += 1
+        if description == []:
+            print ("Invalid Pokedex: no description for {name}.\n")
+            return None
+
+        #check for duplicate numbers or name
+        if number in pokemon or name in names:
+            print("Invalid Pokedex: Pokemon {name} or {number} already exists in the Pokedex.\n")
+            return None
+
+        #valid entry
+        names.append(name)
+        pokemon[number] = {"name": name, "types": types, "description": description}
+
+    return title, pokemon
+
+
+
 #---menu option 1:---
 #import pokedex
 def import_pokedex(user_file):
@@ -18,19 +107,25 @@ def import_pokedex(user_file):
 
         #check file exists on disk
         try:
-            with open(pokedex, "r") as file:
+            #open utf-8 file
+            with open(pokedex, "r", encoding="utf-8") as file:
                 data = file.read()
-
-            #check data is valid pokedex
-
-
-            return data
         except FileNotFoundError:
             pokedex = input("File could not be found. Please ensure the provided file exists, "
-                         "or press 0 to return to the main menu.\n").strip() #remove whitespace
+                            "or press 0 to return to the main menu.\n").strip() #remove whitespace
+            continue
+        except UnicodeDecodeError:
+            print("File is not valid UTF-8.\n")
+            return None
+
+        imported_pokemon = parse_pokedex(data)
+        print(imported_pokemon) # temp testing
+        return imported_pokemon
 
 
 #---menu option 2:---
+def print_summary(pokedex):
+    print(pokedex)
 
 
 #---menu option 3:---
@@ -50,6 +145,7 @@ def import_pokedex(user_file):
 
 #---main menu:---
 #allow user to select valid menu option
+
 while True:
     selected_menu_item = input("Select an option:\n"
                                "1. Import a Pokédex from a text file.\n"
@@ -61,9 +157,16 @@ while True:
                                "0. Exit.\n")
 
     if selected_menu_item == "1":
-        import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokemon.txt):\n "))
+        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokemon.txt):\n "))
+        #validation for imported pokedex
+        if result is not None:
+            pokedex = result
+
+
     elif selected_menu_item == "2":
-        print("nothing yet")
+        print_summary(pokedex)
+
+
     elif selected_menu_item == "3":
         print("nothing yet")
     elif selected_menu_item == "4":
