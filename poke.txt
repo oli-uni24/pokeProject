@@ -1,7 +1,7 @@
 POKEDEX: Mini Kanto Pokédex
 
 #004 Charmander
-Type:
+Type: Fire
 Charmander is a fire lizard.
 The fire on its tail shows its mood.
 
