@@ -1,7 +1,12 @@
 import sys
 
+#fix name print part
+#pack pokemon and title on parser return
+
 #store variables
-pokedex = None
+title = None
+pokemon = None
+
 
 def parse_header(header):
     #check header is valid
@@ -125,8 +130,12 @@ def import_pokedex(user_file):
 
 #---menu option 2:---
 def print_summary(pokedex):
-    print(pokedex)
-
+    print("The total number of Pokemon:\n" #len of dictionary of pokemon
+          "Total number of words:\n"  #all descriptions concatenated?
+    "Number of distinct words:\n " #using function
+          "Top 10 words:" #using function
+          "Pokemon per type" #print type and number in loop
+    )
 
 #---menu option 3:---
 
