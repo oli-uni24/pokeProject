@@ -126,29 +126,28 @@ def import_pokedex(user_file):
 
 
 #----menu option 2:----
+#-----get all words in pokedex-----
+def get_all_words(pokemon):
+    words = []
+    for entry in pokemon.values():
+        for line in entry["description"]:
+            words.extend(line.split())
+    return words
 
 #-----counting distinct words in pokedex descriptions-----
 def count_distinct_words(imported_pokedex):
-    #get all descriptions
-    all_descriptions = [pokemon["description"] for pokemon in imported_pokedex[1].values()]
-
-    #flatten list of lists into a single list of words
-    all_words = []
-    for description in all_descriptions:
-        words = description.split() #split description into words
-        all_words.extend(words) #add words to all_words list
-    distinct_words = []
-
-    #find out if word is already in distinct_words list, if not add it
-    for word in all_words:
-        if word not in distinct_words:
-            distinct_words.append(word)
-
+    all_words = get_all_words(imported_pokedex[1])
+    distinct_words = len(set(all_words)) #set only stores unique items, len gives num of items in set
     return distinct_words
-
 
 #-----printing summary of pokedex-----
 def print_summary(imported_pokedex):
+    #check pokedex exists
+    if imported_pokedex is None:
+        print("No Pokedex was provided. Please import one first (option 1).\n")
+        return
+    title, pokemon = imported_pokedex #tuple unpacking
+
     #get total number of pokemon
     total_pokemon = len(imported_pokedex[1]) #dictionary of pokemon
 
