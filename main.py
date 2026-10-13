@@ -204,10 +204,17 @@ def print_summary(imported_pokedex):
         print(build_summary(imported_pokedex) + "\n")
     input("Press enter to return to the main menu.\n")
 
-
-
 #---menu option 3:---
 
+def save_summary_file(imported_pokedex):
+    #check pokedex exists
+    if imported_pokedex is None:
+        print("No Pokedex was provided. Please import one first (option 1).\n")
+        return
+    else:
+        #write to file, making sure to check for error
+
+    input("Press enter to return to the main menu.\n")
 
 #---menu option 4:---
 
@@ -240,13 +247,12 @@ while True:
         if result is not None:
             pokedex = result
 
-
     elif selected_menu_item == "2":
         print_summary(pokedex)
 
-
     elif selected_menu_item == "3":
-        print("nothing yet")
+        save_summary_file(pokedex)
+
     elif selected_menu_item == "4":
         print("nothing yet")
     elif selected_menu_item == "5":
