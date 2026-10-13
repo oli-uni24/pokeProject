@@ -31,7 +31,7 @@ def parse_pokedex(pokedex):
 
     #must not be empty and start with POKEDEX:
     if not lines or lines[0][:8] != "POKEDEX:":
-        print("Invalid Pokedex: first line must be POKEDEX: "
+        print("Invalid Pokédex: first line must be POKEDEX: "
               "followed by a title.\n")
         return None
 
@@ -44,33 +44,33 @@ def parse_pokedex(pokedex):
 
     #pokedex must contain pokemon
     if i >= len(lines):
-        print("Invalid Pokedex: it must contain at least one Pokemon.\n")
+        print("Invalid Pokédex: it must contain at least one Pokemon.\n")
         return None
 
     #check if header is valid
     while i < len(lines):
         header = parse_header(lines[i])
         if header is None:
-            print("Invalid Pokedex: expected an entry header containing the Pokémon name and number,"
+            print("Invalid Pokédex: expected an entry header containing the Pokémon name and number,"
                   "(e.g. #004 Charmander).\n")
             return None
 
         #tuple unpacking
         number, name = header
         if number <= 0:
-            print("Invalid Pokedex: Pokémon number must be positive.\n")
+            print("Invalid Pokédex: Pokémon number must be positive.\n")
             return None
         i += 1
 
         #check type exists
         if (i >= len(lines)) or (lines[i][:5]!="Type:"):
-            print ("Invalid Pokedex: missing Type for {name}.\n")
+            print ("Invalid Pokédex: missing Type for {name}.\n")
             return None
 
         #check valid number of types
         types = [t.strip() for t in lines[i][6:].split("/")]
         if len(types) > 2 or "" in types:
-            print ("Invalid Pokedex: incorrect number of types for {name}.\n")
+            print ("Invalid Pokédex: incorrect number of types for {name}.\n")
             return None
         i += 1
 
@@ -80,12 +80,12 @@ def parse_pokedex(pokedex):
             description.append(lines[i].strip())
             i += 1
         if not description:
-            print ("Invalid Pokedex: no description for {name}.\n")
+            print ("Invalid Pokédex: no description for {name}.\n")
             return None
 
         #check for duplicate numbers or name
         if number in pokemon or name in names:
-            print("Invalid Pokedex: Pokemon {name} or {number} already exists in the Pokedex.\n")
+            print("Invalid Pokédex: Pokemon {name} or {number} already exists in the Pokédex.\n")
             return None
 
         #valid entry
@@ -181,7 +181,7 @@ def build_summary(imported_pokedex):
 
     #build string
     lines = []
-    lines.append(f"\nFor Pokedex: {title}")
+    lines.append(f"\nFor Pokédex: {title}")
     lines.append(f"\nThe total number of Pokemon: {total_pokemon}")
     lines.append(f"Total number of words: {total_words_count}")
     lines.append(f"Number of distinct words: {distinct_words}")
@@ -198,7 +198,7 @@ def build_summary(imported_pokedex):
 def print_summary(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
-        print("No Pokedex was provided. Please import one first (option 1).\n")
+        print("No Pokédex was provided. Please import one first (option 1).\n")
         return
     else:
         print(build_summary(imported_pokedex) + "\n")
@@ -209,7 +209,7 @@ def print_summary(imported_pokedex):
 def save_summary_file(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
-        print("No Pokedex was provided. Please import one first (option 1).\n")
+        print("No Pokédex was provided. Please import one first (option 1).\n")
         return
     else:
         #write to file, making sure to check for error
