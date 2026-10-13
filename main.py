@@ -1,3 +1,4 @@
+import string #from standard library, for stripping punctuation from pokedex
 import sys
 
 #fix name print part
@@ -78,7 +79,7 @@ def parse_pokedex(pokedex):
         while i < len(lines) and parse_header(lines[i]) is None:
             description.append(lines[i].strip())
             i += 1
-        if description == []:
+        if not description:
             print ("Invalid Pokedex: no description for {name}.\n")
             return None
 
@@ -121,7 +122,6 @@ def import_pokedex(user_file):
             return None
 
         imported_pokemon = parse_pokedex(data)
-        print(imported_pokemon) # temp testing
         return imported_pokemon
 
 
@@ -131,14 +131,37 @@ def get_all_words(pokemon):
     words = []
     for entry in pokemon.values():
         for line in entry["description"]:
-            words.extend(line.split())
-    return words
+            words.extend(w.lower().strip(string.punctuation) for w in line.split()) #put all words into lowercase
+    no_empty_words = []
+    for w in words:
+        if w: #skip empty strings
+            no_empty_words.append(w)
+    return no_empty_words
 
 #-----counting distinct words in pokedex descriptions-----
-def count_distinct_words(imported_pokedex):
-    all_words = get_all_words(imported_pokedex[1])
+def count_distinct_words(all_words):
     distinct_words = len(set(all_words)) #set only stores unique items, len gives num of items in set
     return distinct_words
+
+#-----get top 10 words in pokedex-----
+def get_top_words(all_words, n=20):
+    word_counts = {}
+    for word in all_words:
+        word_counts[word] = word_counts.get(word, 0) + 1
+
+    #sort by total count (highest first), then by alphabet to break any ties
+    sorted_words = sorted(word_counts.items(), key=lambda item: (-item[1], item[0]))[:10]
+    return sorted_words[:n]
+
+#-----sort pokemon by type-----
+def sort_pokemon_by_type(pokemon):
+    type_counts = {}
+    for entry in pokemon.values():
+        for t in entry["types"]:
+            type_counts[t] = type_counts.get(t, 0) + 1
+    sorted_types = sorted(type_counts.items(), key=lambda item: (-item[1], item[0]))
+    return sorted_types
+
 
 #-----printing summary of pokedex-----
 def print_summary(imported_pokedex):
@@ -147,24 +170,37 @@ def print_summary(imported_pokedex):
         print("No Pokedex was provided. Please import one first (option 1).\n")
         return
     title, pokemon = imported_pokedex #tuple unpacking
+    all_words = get_all_words(pokemon)
+    top_words = get_top_words(all_words)
+    sorted_types = sort_pokemon_by_type(pokemon)
 
     #get total number of pokemon
     total_pokemon = len(imported_pokedex[1]) #dictionary of pokemon
 
     #get total number of words in all descriptions
-    total_words = sum(len(pokemon["description"]) for pokemon in imported_pokedex[1].values())
+    total_words = len(all_words)
 
-    #get number of distinct words in all descriptions - using IDF
-    distinct_words = count_distinct_words(imported_pokedex)
+    #get total number of distinct words
+    distinct_words = count_distinct_words(all_words)
 
 
-
-    print("The total number of Pokemon:\n"
-          "Total number of words:\n"  #all descriptions concatenated?
-          "Number of distinct words:\n " #using function
-          "Top 10 words:\n" #using function
-          "Pokemon per type:\n" #print type and number in loop
+    #print output
+    print(f"For Pokedex: {title}\n"
+          f"The total number of Pokemon: {total_pokemon}\n"
+          f"Total number of words: {total_words}\n"
+          f"Number of distinct words: {distinct_words}\n"
     )
+
+    print("Top 10 most common words:")
+    for word, count in top_words:
+        print(f"{word}: {count}")
+
+    print("\nPokemon per type:")
+    for t, count in sorted_types:
+        print(f"{t}: {count}")
+
+    print()
+    input("Press Enter to return to main menu")
 
 #---menu option 3:---
 
