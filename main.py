@@ -1,8 +1,8 @@
 import string #from standard library, for stripping punctuation from pokedex
 import sys
 
-#fix name print part
-#pack pokemon and title on parser return
+#------------NOTE TODO
+#add numbers to top 10 and pokemon per type
 
 #store variables
 title = None
