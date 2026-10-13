@@ -44,7 +44,7 @@ def parse_pokedex(pokedex):
 
     #pokedex must contain pokemon
     if i >= len(lines):
-        print("Invalid Pokédex: it must contain at least one Pokemon.\n")
+        print("Invalid Pokédex: it must contain at least one Pokémon.\n")
         return None
 
     #check if header is valid
@@ -85,7 +85,7 @@ def parse_pokedex(pokedex):
 
         #check for duplicate numbers or name
         if number in pokemon or name in names:
-            print("Invalid Pokédex: Pokemon {name} or {number} already exists in the Pokédex.\n")
+            print("Invalid Pokédex: Pokémon {name} or {number} already exists in the Pokédex.\n")
             return None
 
         #valid entry
@@ -104,7 +104,7 @@ def import_pokedex(user_file):
 
         #check valid filename
         if raw_pokedex[-4:] != ".txt":
-            raw_pokedex = input("Please ensure the provided file is a text file (e.g. myFavouritePokemon.txt), "
+            raw_pokedex = input("Please ensure the provided file is a text file (e.g. myFavouritePokémon.txt), "
                             "or press 0 to return to the main menu.\n").strip() #remove whitespace
             continue
 
@@ -181,16 +181,16 @@ def build_summary(imported_pokedex):
 
     #build string
     lines = []
-    lines.append(f"\nFor Pokédex: {title}")
-    lines.append(f"\nThe total number of Pokemon: {total_pokemon}")
+    lines.append(f"\nSummary Report: {title}")
+    lines.append(f"\nNumber of Pokémon: {total_pokemon}")
     lines.append(f"Total number of words: {total_words_count}")
     lines.append(f"Number of distinct words: {distinct_words}")
     lines.append("")
-    lines.append("Top 10 most common words:")
+    lines.append("Top 10 words:")
     for word, count in top_words:
         lines.append(f" {word}: {count}")
     lines.append("")
-    lines.append("Pokemon per type:")
+    lines.append("Pokémon per type:")
     for t, count in sorted_types:
         lines.append(f"    {t}: {count}")
     return "\n".join(lines)
@@ -243,7 +243,7 @@ while True:
                                "0. Exit.\n")
 
     if selected_menu_item == "1":
-        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokemon.txt):\n "))
+        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokémon.txt):\n "))
         #validation for imported pokedex
         if result is not None:
             pokedex = result
