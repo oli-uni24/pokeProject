@@ -195,6 +195,7 @@ def build_summary(imported_pokedex):
         lines.append(f"    {t}: {count}")
     return "\n".join(lines)
 
+#-----building summary of pokedex-----
 def print_summary(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
@@ -205,7 +206,7 @@ def print_summary(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 3:---
-
+#-----create text file of pokedex summary-----
 def save_summary_file(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
