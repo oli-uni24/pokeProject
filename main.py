@@ -163,12 +163,8 @@ def sort_pokemon_by_type(pokemon):
     return sorted_types
 
 
-#-----printing summary of pokedex-----
-def print_summary(imported_pokedex):
-    #check pokedex exists
-    if imported_pokedex is None:
-        print("No Pokedex was provided. Please import one first (option 1).\n")
-        return
+#-----building summary of pokedex as a string-----
+def build_summary(imported_pokedex):
     title, pokemon = imported_pokedex #tuple unpacking
     all_words = get_all_words(pokemon)
     top_words = get_top_words(all_words)
@@ -178,29 +174,37 @@ def print_summary(imported_pokedex):
     total_pokemon = len(imported_pokedex[1]) #dictionary of pokemon
 
     #get total number of words in all descriptions
-    total_words = len(all_words)
+    total_words_count = len(all_words)
 
     #get total number of distinct words
     distinct_words = count_distinct_words(all_words)
 
-
-    #print output
-    print(f"For Pokedex: {title}\n"
-          f"The total number of Pokemon: {total_pokemon}\n"
-          f"Total number of words: {total_words}\n"
-          f"Number of distinct words: {distinct_words}\n"
-    )
-
-    print("Top 10 most common words:")
+    #build string
+    lines = []
+    lines.append(f"\nFor Pokedex: {title}")
+    lines.append(f"\nThe total number of Pokemon: {total_pokemon}")
+    lines.append(f"Total number of words: {total_words_count}")
+    lines.append(f"Number of distinct words: {distinct_words}")
+    lines.append("")
+    lines.append("Top 10 most common words:")
     for word, count in top_words:
-        print(f"{word}: {count}")
-
-    print("\nPokemon per type:")
+        lines.append(f" {word}: {count}")
+    lines.append("")
+    lines.append("Pokemon per type:")
     for t, count in sorted_types:
-        print(f"{t}: {count}")
+        lines.append(f"    {t}: {count}")
+    return "\n".join(lines)
 
-    print()
-    input("Press Enter to return to main menu")
+def print_summary(imported_pokedex):
+    #check pokedex exists
+    if imported_pokedex is None:
+        print("No Pokedex was provided. Please import one first (option 1).\n")
+        return
+    else:
+        print(build_summary(imported_pokedex) + "\n")
+    input("Press enter to return to the main menu.\n")
+
+
 
 #---menu option 3:---
 
