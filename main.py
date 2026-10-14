@@ -234,6 +234,7 @@ def save_summary_file(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 4:---
+#-----calculate inverse document frequency per word-----
 def calculate_idf(pokemon):
     n = len(pokemon) #number of documents
     doc_frequency = {}
@@ -244,6 +245,44 @@ def calculate_idf(pokemon):
     for word, df in doc_frequency.items():
         idf[word] = math.log(n/df)
     return idf
+
+#-----calculate top words by tf-idf for one pokemon-----
+def get_top_tfidf_words(entry, idf, n=5):
+    #avoid dividing by 0 in case of desc with no words
+    words = get_entry_words(entry)
+    if not words:
+        return []
+
+    #get freq of word in pokemon desc
+    counts = {}
+    for word in words:
+        counts[word] = counts.get(word, 0) + 1
+
+    #calculate tf-idf of the word
+    scores={}
+    for word, count in counts.items():
+        tf = count / len(words)
+        scores[word] = tf * idf[word]
+
+    #sorts by score then alphabet in case of ties
+    return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:n]
+
+#-----find pokemon from user input-----
+def find_pokemon(pokemon, query):
+    #if user asks for pokemon by its number
+    if query.isdigit():
+        number = int(query)
+        if number in pokemon:
+            return number, pokemon[number]
+    #if user asks for pokemon by its name
+    else:
+        for number, entry in pokemon.items():
+            if entry["name"].lower() == query.lower(): #change to lower case
+                return number, entry
+    return None
+
+#-----find pokemon from user input-----
+
 
 #---menu option 5:---
 
