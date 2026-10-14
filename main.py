@@ -1,9 +1,6 @@
 import string #from standard library, for stripping punctuation from pokedex
 import sys
 
-#------------NOTE TODO
-#add numbers to top 10 and pokemon per type
-
 #store variables
 title = None
 pokedex = None
@@ -92,6 +89,7 @@ def parse_pokedex(pokedex):
         names.append(name)
         pokemon[number] = {"name": name, "types": types, "description": description}
 
+    print(f"{title} imported successfully.")
     return title, pokemon
 
 def import_pokedex(user_file):
@@ -179,6 +177,8 @@ def build_summary(imported_pokedex):
     #get total number of distinct words
     distinct_words = count_distinct_words(all_words)
 
+    n = 1
+
     #build string
     lines = []
     lines.append(f"\nSummary Report: {title}")
@@ -188,11 +188,14 @@ def build_summary(imported_pokedex):
     lines.append("")
     lines.append("Top 10 words:")
     for word, count in top_words:
-        lines.append(f" {word}: {count}")
+        lines.append(f"{n}. {word}: {count}")
+        n+=1
     lines.append("")
     lines.append("Pokémon per type:")
+    n=1
     for t, count in sorted_types:
-        lines.append(f"    {t}: {count}")
+        lines.append(f"{n}. {t}: {count}")
+        n+=1
     return "\n".join(lines)
 
 #-----building summary of pokedex-----
@@ -211,9 +214,14 @@ def save_summary_file(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
         print("No Pokédex was provided. Please import one first (option 1).\n")
-        return
     else:
         #write to file, making sure to check for error
+        try:
+            with open("summary_pokedex.txt", "w", encoding="utf-8") as file:
+                file.write(build_summary(imported_pokedex) + "\n")
+            print("Summary saved to summary_pokedex.txt.\n")
+        except OSError: #covers writing errors from OS
+            print("Could not write to summary_pokedex.txt.\n")
 
     input("Press enter to return to the main menu.\n")
 
