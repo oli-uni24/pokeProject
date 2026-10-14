@@ -1,3 +1,4 @@
+import math
 import string #from standard library, for stripping punctuation from pokedex
 import sys
 
@@ -124,17 +125,24 @@ def import_pokedex(user_file):
 
 
 #----menu option 2:----
-#-----get all words in pokedex-----
-def get_all_words(pokemon):
+#-----get all words in one entry-----
+def get_entry_words(entry):
     words = []
-    for entry in pokemon.values():
-        for line in entry["description"]:
-            words.extend(w.lower().strip(string.punctuation) for w in line.split()) #put all words into lowercase
+    for line in entry["description"]:
+        words.extend(w.lower().strip(string.punctuation) for w in line.split()) #put all words into lowercase
     no_empty_words = []
+
     for w in words:
         if w: #skip empty strings
             no_empty_words.append(w)
     return no_empty_words
+
+#-----get all words in pokedex-----
+def get_all_words(pokemon):
+    words = []
+    for entry in pokemon.values():
+       words.extend(get_entry_words(entry))
+    return words
 
 #-----counting distinct words in pokedex descriptions-----
 def count_distinct_words(all_words):
@@ -226,7 +234,16 @@ def save_summary_file(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 4:---
-
+def calculate_idf(pokemon):
+    n = len(pokemon) #number of documents
+    doc_frequency = {}
+    for entry in pokemon.values():
+        for word in set(get_entry_words(entry)): #using set ensures each doc counts once (+1 per description containing word)
+            doc_frequency[word] = doc_frequency.get(word, 0) + 1 #creates dictionary - gives 0 if word isn't in dict yet
+    idf = {}
+    for word, df in doc_frequency.items():
+        idf[word] = math.log(n/df)
+    return idf
 
 #---menu option 5:---
 
