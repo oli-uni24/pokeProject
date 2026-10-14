@@ -6,6 +6,8 @@ import sys
 title = None
 pokedex = None
 
+#TODO No Pokédex was provided. Please import one first (option 1). <- ADD THIS TO OPTION 3
+
 #----menu option 1----
 #-----parsing pokedex-----
 def parse_header(header):
@@ -195,15 +197,12 @@ def build_summary(imported_pokedex):
     lines.append(f"Number of distinct words: {distinct_words}")
     lines.append("")
     lines.append("Top 10 words:")
-    for word, count in top_words:
+    for n, (word, count) in enumerate(top_words, start=1):
         lines.append(f"{n}. {word}: {count}")
-        n+=1
     lines.append("")
     lines.append("Pokémon per type:")
-    n=1
-    for t, count in sorted_types:
+    for n, (t, count) in enumerate(sorted_types, start=1):
         lines.append(f"{n}. {t}: {count}")
-        n+=1
     return "\n".join(lines)
 
 #-----building summary of pokedex-----
@@ -281,8 +280,46 @@ def find_pokemon(pokemon, query):
                 return number, entry
     return None
 
-#-----find pokemon from user input-----
+#-----print pokemon requested by user-----
+def print_pokemon(imported_pokedex):
+    if imported_pokedex is None:
+        print("No Pokédex was provided. Please import one first (option 1).\n")
+        input("Press enter to return to the main menu.\n")
+        return
 
+    pokemon = imported_pokedex[1]
+
+    #keep asking until valid, or 0 to exit
+    while True:
+        user_pokemon = input("Enter a Pokemon name or a Pokedex number "
+                             "(or 0 to return to the main menu):\n").strip()
+        if user_pokemon==0:
+            return
+        result = find_pokemon(pokemon, user_pokemon)
+        if result is not None:
+            break
+        print("Pokemon not found, please check the name or number.\n")
+
+    number, entry = result
+    words = get_entry_words(entry)
+    idf = calculate_idf(pokemon)
+
+    #format output
+    print(f"\n#{number:03d} {entry['name']}") #ensure number is 3 dec places (0s before)
+    print(f"Type: {' / '.join(entry['types'])}")
+    print(f"{' '.join(entry['description'])}")
+    print(f"\nNumber of words: {len(words)}")
+
+    print("\nMost frequent words:")
+    for num, (word, count) in enumerate(get_top_words(words, 5), start=1):
+        print(f"{num}. {word}: {count}")
+
+    print("\nTop TF-IDF keywords:")
+    for num, (word, score) in enumerate(get_top_tfidf_words(entry, idf), start=1):
+        print(f"{num}. {word}: {score:.4f}")
+
+    print()
+    input("Press enter to return to the main menu.\n")
 
 #---menu option 5:---
 
@@ -319,7 +356,8 @@ while True:
         save_summary_file(pokedex)
 
     elif selected_menu_item == "4":
-        print("nothing yet")
+        print_pokemon(pokedex)
+
     elif selected_menu_item == "5":
         print("nothing yet")
     elif selected_menu_item == "6":
