@@ -64,13 +64,13 @@ def parse_pokedex(pokedex):
 
         #check type exists
         if (i >= len(lines)) or (lines[i][:5]!="Type:"):
-            print ("Invalid Pokédex: missing Type for {name}.\n")
+            print (f"Invalid Pokédex: missing Type for {name}.\n")
             return None
 
         #check valid number of types
-        types = [t.strip() for t in lines[i][6:].split("/")]
+        types = [t.strip() for t in lines[i][5:].split("/")]
         if len(types) > 2 or "" in types:
-            print ("Invalid Pokédex: incorrect number of types for {name}.\n")
+            print (f"Invalid Pokédex: incorrect number of types for {name}.\n")
             return None
         i += 1
 
@@ -80,12 +80,12 @@ def parse_pokedex(pokedex):
             description.append(lines[i].strip())
             i += 1
         if not description:
-            print ("Invalid Pokédex: no description for {name}.\n")
+            print (f"Invalid Pokédex: no description for {name}.\n")
             return None
 
         #check for duplicate numbers or name
         if number in pokemon or name in names:
-            print("Invalid Pokédex: Pokémon {name} or {number} already exists in the Pokédex.\n")
+            print(f"Invalid Pokédex: Pokémon {name} or {number} already exists in the Pokédex.\n")
             return None
 
         #valid entry
@@ -131,13 +131,8 @@ def import_pokedex(user_file):
 def get_entry_words(entry):
     words = []
     for line in entry["description"]:
-        words.extend(w.lower().strip(string.punctuation) for w in line.split()) #put all words into lowercase
-    no_empty_words = []
-
-    for w in words:
-        if w: #skip empty strings
-            no_empty_words.append(w)
-    return no_empty_words
+        words.extend(clean_words(line)) #put all words into lowercase
+    return words
 
 #-----get all words in pokedex-----
 def get_all_words(pokemon):
@@ -152,13 +147,13 @@ def count_distinct_words(all_words):
     return distinct_words
 
 #-----get top 10 words in pokedex-----
-def get_top_words(all_words, n=20):
+def get_top_words(all_words, n=10):
     word_counts = {}
     for word in all_words:
         word_counts[word] = word_counts.get(word, 0) + 1
 
     #sort by total count (highest first), then by alphabet to break any ties
-    sorted_words = sorted(word_counts.items(), key=lambda item: (-item[1], item[0]))[:10]
+    sorted_words = sorted(word_counts.items(), key=lambda item: (-item[1], item[0]))
     return sorted_words[:n]
 
 #-----sort pokemon by type-----
@@ -210,7 +205,6 @@ def print_summary(imported_pokedex):
     #check pokedex exists
     if imported_pokedex is None:
         print("No Pokédex was provided. Please import one first (option 1).\n")
-        return
     else:
         print(build_summary(imported_pokedex) + "\n")
     input("Press enter to return to the main menu.\n")
@@ -233,6 +227,15 @@ def save_summary_file(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 4:---
+#-----standardise words in description-----
+def clean_words(text):
+    words = []
+    for w in text.split():
+        w = w.lower().strip(string.punctuation)
+        if w:
+            words.append(w)
+    return words
+
 #-----calculate inverse document frequency per word-----
 def calculate_idf(pokemon):
     n = len(pokemon) #number of documents
@@ -245,8 +248,8 @@ def calculate_idf(pokemon):
         idf[word] = math.log(n/df)
     return idf
 
-#-----calculate top words by tf-idf for one pokemon-----
-def get_top_tfidf_words(entry, idf, n=5):
+#-----calculate tf-idf score for all words for one pokemon-----
+def calculate_tfidf_words(entry, idf):
     #avoid dividing by 0 in case of desc with no words
     words = get_entry_words(entry)
     if not words:
@@ -262,8 +265,12 @@ def get_top_tfidf_words(entry, idf, n=5):
     for word, count in counts.items():
         tf = count / len(words)
         scores[word] = tf * idf[word]
+    return scores
 
+#-----top words in order of tf-idf
+def get_top_tfidf_words(entry, idf, n=5):
     #sorts by score then alphabet in case of ties
+    scores = calculate_tfidf_words(entry, idf)
     return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:n]
 
 #-----find pokemon from user input-----
@@ -293,7 +300,7 @@ def print_pokemon(imported_pokedex):
     while True:
         user_pokemon = input("Enter a Pokemon name or a Pokedex number "
                              "(or 0 to return to the main menu):\n").strip()
-        if user_pokemon==0:
+        if user_pokemon=="0":
             return
         result = find_pokemon(pokemon, user_pokemon)
         if result is not None:
