@@ -329,7 +329,53 @@ def print_pokemon(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 5:---
+def search_pokedex(pokemon, query, idf):
+    search_results = []
+    for number, entry in pokemon.items():
+        scores = calculate_tfidf_words(entry, idf)
+        total = sum(scores.get(w, 0) for w in query)
+        if total > 0: #score of 0 to be ignored
+            search_results.append((number, entry["name"], total))
 
+    #order by highest score first
+    search_results.sort(key=lambda sr: (-sr[2], sr[0])) #if scores are equal, sort by lower pokedex num first
+    return search_results[:5]
+
+#-----search menu/ui-----
+def search_menu(imported_pokedex):
+    if imported_pokedex is None:
+        print("No Pokedex was provided. Please import one first (option 1).\n")
+        input("Press enter to return to the main menu.\n")
+        return
+
+    pokemon = imported_pokedex[1]
+
+    #keep asking until a word is entered
+    while True:
+        query = clean_words(input("Search for: "))
+        if query:
+            break
+        print("Please enter at least one word.\n")
+
+    query = sorted(set(query)) #reemove repeated words
+    idf = calculate_idf(pokemon)
+
+    #words that don't appear at all
+    not_found = [w for w in query if w not in idf]
+    if not_found:
+        print(f"\nNot found in Pokedex: {', '.join(not_found)}")
+
+    result = search_pokedex(pokemon, query, idf)
+
+    if not result:
+        print("\nNo Pokemon match your search criteria.\n")
+    else:
+        print("\nBest matches:")
+        for rank, (number, name, score) in enumerate(result, start=1):
+            print(f"{rank}. #{number:03d} {name} (score {score:.4f})")
+
+    print()
+    input("Press enter to return to the main menu.\n")
 
 #---menu option 6:---
 
@@ -366,7 +412,8 @@ while True:
         print_pokemon(pokedex)
 
     elif selected_menu_item == "5":
-        print("nothing yet")
+        search_menu(pokedex)
+
     elif selected_menu_item == "6":
         print("nothing yet")
     #exit program
