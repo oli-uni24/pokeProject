@@ -5,8 +5,6 @@ import sys
 title = None
 pokedex = None
 
-#TODO No Pokédex was provided. Please import one first (option 1). <- ADD THIS TO OPTION 3
-
 #----menu option 1----
 #-----parsing pokedex-----
 def parse_header(header):
@@ -29,7 +27,7 @@ def parse_pokedex(text):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
 
     #must not be empty and start with POKEDEX:
-    if not lines or lines[0].startswith("POKEDEX:"):
+    if not lines or not lines[0].startswith("POKEDEX:"):
         print("Invalid Pokédex: first line must be POKEDEX: "
               "followed by a title.\n")
         return None
@@ -62,7 +60,7 @@ def parse_pokedex(text):
         i += 1
 
         #check type exists
-        if (i >= len(lines)) or (lines[i].startswith("Type:")):
+        if (i >= len(lines)) or not (lines[i].startswith("Type:")):
             print(f"Invalid Pokédex: missing Type for {name}.\n")
             return None
 
