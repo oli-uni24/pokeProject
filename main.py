@@ -296,16 +296,10 @@ def print_pokemon(imported_pokedex):
 
     pokemon = imported_pokedex[1]
 
-    #keep asking until valid, or 0 to exit
-    while True:
-        user_pokemon = input("Enter a Pokemon name or a Pokedex number "
-                             "(or 0 to return to the main menu):\n").strip()
-        if user_pokemon=="0":
-            return
-        result = find_pokemon(pokemon, user_pokemon)
-        if result is not None:
-            break
-        print("Pokemon not found, please check the name or number.\n")
+    #ask user for pokemon, return None if exited
+    result = ask_user_for_pokemon(pokemon)
+    if result is None:
+        return
 
     number, entry = result
     words = get_entry_words(entry)
@@ -378,9 +372,87 @@ def search_menu(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 6:---
+#-----similarity between two pokemons tf-idf scores-----
+def cosine_similarity(scores1, scores2):
+    #get overlap sum
+    overlap_sum = 0
 
+    for word, score1 in scores1.items():
+        if word in scores2:
+            score2 = scores2[word]  #get score for scores2 if word also exists in it
+            overlap_sum += score1 * score2 #multiply the two scores and add to the overlap sum
 
+    #get scores1s totals
+    sum_square_1 = 0
+    for score in scores1.values():
+        sum_square_1 += score * score #square scores and add together
 
+        total1 = math.sqrt(sum_square_1) #square root of score1
+
+    #get scores2 totals
+    sum_square_2 = 0
+    for score in scores2.values():
+        sum_square_2 += score * score #square scores and add together
+
+        total2 = math.sqrt(sum_square_2) #square root of score2
+
+    #final division
+    return overlap_sum / (total1 * total2)
+
+#-----find the 3 most similar pokemon to the entered one-----
+def find_similar(pokemon, number, idf):
+    target = calculate_tfidf_words(pokemon[number], idf)
+    results = []
+
+    for n, entry in pokemon.items():
+        if n == number: #don't compare pokemon to itself
+            continue
+        similarity = cosine_similarity(target, calculate_tfidf_words(entry, idf))
+        if similarity > 0: #don't include similarity score of 0
+            results.append((n, entry["name"], similarity))
+
+        #highest similarity ordered first, then by lowest pokedex number for ties
+        results.sort(key=lambda sr: (-sr[2], sr[0]))
+        return results[:3]
+
+#-----ask user for pokemon and return the number & entry, or error -----
+def ask_user_for_pokemon(pokemon):
+    while True:
+        user_pokemon = input("enter a Pokemon name or a Pokedex number "
+                             "(or 0 to return to the main menu):\n").strip()
+        if user_pokemon=="0":
+            return None
+        result = find_pokemon(pokemon, user_pokemon)
+        if result is not None:
+            return result
+        print("Pokemon not found, please check the name or number.\n")
+
+#-----actual menu function-----
+def similar_menu(imported_pokedex):
+    if imported_pokedex is None:
+        print("No Pokedex was provided. Please import one first (option 1).\n")
+        input("Press enter to return to the main menu.\n")
+        return
+
+    pokemon = imported_pokedex[1]
+
+    result = ask_user_for_pokemon(pokemon)
+    if result is None:
+        return
+    number, entry = result
+
+    idf = calculate_idf(pokemon)
+    similar = find_similar(pokemon, number, idf)
+
+    if not similar:
+        print(f"\nNo Pokemon match your search criteria of {entry['name']}.\n")
+    else:
+        print(f"\nMost similar:")
+        for rank, (number, name, score) in enumerate(similar, start=1):
+            print(f"{rank}. #{number:03d} {name} (score {score:.4f})")
+
+    print()
+    input("Press enter to return to the main menu.\n")
 
 
 #---main menu:---
@@ -415,10 +487,12 @@ while True:
         search_menu(pokedex)
 
     elif selected_menu_item == "6":
-        print("nothing yet")
+        similar_menu(pokedex)
+
     #exit program
     elif selected_menu_item == "0":
         sys.exit()
+
     #invalid option
     else :
         print("Please select a valid option.\n")
