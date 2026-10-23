@@ -1,5 +1,4 @@
 import math
-import string #from standard library, for stripping punctuation from pokedex
 import sys
 
 #store variables
@@ -229,11 +228,30 @@ def save_summary_file(imported_pokedex):
 #---menu option 4:---
 #-----standardise words in description-----
 def clean_words(text):
+    #lowercase everything and treat curly apostrophies the same as straight ones
+    text = text.lower().replace("’", "'")
+
     words = []
-    for w in text.split():
-        w = w.lower().strip(string.punctuation)
-        if w:
-            words.append(w)
+    current_word = ""
+
+    for i, char in enumerate(text):
+        #if next character is a letter
+        next_is_letter =  i + 1 < len(text) and text[i + 1].isalpha()
+
+        if char.isalpha():
+            current_word += char
+        elif char == "'" and current_word and next_is_letter:
+            current_word += char #apostrophe with a letter on either side stays in word
+        else:
+            #anything else ends current word
+            if current_word:
+                words.append(current_word)
+                current_word = ""
+
+    #if text ends mid word
+    if current_word:
+        words.append(current_word)
+
     return words
 
 #-----calculate inverse document frequency per word-----
@@ -253,7 +271,7 @@ def calculate_tfidf_words(entry, idf):
     #avoid dividing by 0 in case of desc with no words
     words = get_entry_words(entry)
     if not words:
-        return []
+        return {}
 
     #get freq of word in pokemon desc
     counts = {}
@@ -387,14 +405,18 @@ def cosine_similarity(scores1, scores2):
     for score in scores1.values():
         sum_square_1 += score * score #square scores and add together
 
-        total1 = math.sqrt(sum_square_1) #square root of score1
+    total1 = math.sqrt(sum_square_1) #square root of score1
 
     #get scores2 totals
     sum_square_2 = 0
     for score in scores2.values():
         sum_square_2 += score * score #square scores and add together
 
-        total2 = math.sqrt(sum_square_2) #square root of score2
+    total2 = math.sqrt(sum_square_2) #square root of score2
+
+    #avoid dividing by 0 if either pokemon has only 0 scores
+    if total1 == 0 or total2 == 0:
+        return 0
 
     #final division
     return overlap_sum / (total1 * total2)
