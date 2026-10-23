@@ -440,7 +440,6 @@ def find_similar(pokemon, number, tfidf):
 #-----ask user for pokemon and return the number & entry, or error -----
 def ask_user_for_pokemon(pokemon):
     while True:
-        print("Pokédex Search System")
         user_pokemon = input("Enter a Pokémon name or a Pokédex number "
                              "(or 0 to return to the main menu):\n").strip()
         if user_pokemon=="0":
@@ -470,7 +469,7 @@ def similar_menu(imported_pokedex):
     if not similar:
         print(f"\nNo Pokémon match your search criteria of {entry['name']}.\n")
     else:
-        print(f"Most similar:")
+        print(f"\nMost similar:")
         for rank, (similar_number, name, score) in enumerate(similar, start=1):
             print(f"{rank}. #{similar_number:03d} {name} (score {score:.4f})")
 
@@ -484,6 +483,7 @@ def main():
 
     #allow user to select valid menu option
     while True:
+        print("Pokédex Search System")
         selected_menu_item = input("Select an option:\n"
                                    "1. Import a Pokédex from a text file.\n"
                                    "2. Print a summary report.\n"
