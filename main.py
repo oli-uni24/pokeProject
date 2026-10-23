@@ -1,9 +1,6 @@
 import math
 import sys
-
-#store variables
-title = None
-pokedex = None
+from collections import Counter #standard-library modules
 
 #----menu option 1----
 #-----parsing pokedex-----
@@ -139,9 +136,7 @@ def count_distinct_words(all_words):
 
 #-----get top 10 words in pokedex-----
 def get_top_words(all_words, n=10):
-    word_counts = {}
-    for word in all_words:
-        word_counts[word] = word_counts.get(word, 0) + 1
+    word_counts = Counter(all_words) #counts how many times each word appears
 
     #sort by total count (highest first), then by alphabet to break any ties
     sorted_words = sorted(word_counts.items(), key=lambda item: (-item[1], item[0]))
@@ -149,14 +144,12 @@ def get_top_words(all_words, n=10):
 
 #-----sort pokemon by type-----
 def sort_pokemon_by_type(pokemon):
-    type_counts = {}
+    type_counts = Counter()
     for entry in pokemon.values():
-        for t in entry["types"]:
-            type_counts[t] = type_counts.get(t, 0) + 1
-    sorted_types = sorted(type_counts.items(), key=lambda item: (-item[1], item[0]))
-    return sorted_types
+        type_counts.update(entry["types"]) #add 1 to count of each type in list
+    return sorted(type_counts.items(), key=lambda item: (-item[1], item[0]))
 
-#-----building summary of pokedex as a string-----
+#-----printing summary of pokedex as a string-----
 def build_summary(imported_pokedex):
     title, pokemon, cache = imported_pokedex #tuple unpacking
 
@@ -178,7 +171,7 @@ def build_summary(imported_pokedex):
 
     #build string
     lines = []
-    lines.append(f"\nSummary Report: {title}")
+    lines.append(f"Summary Report: {title}")
     lines.append(f"\nNumber of Pokémon: {total_pokemon}")
     lines.append(f"Total number of words: {total_words_count}")
     lines.append(f"Number of distinct words: {distinct_words}")
@@ -291,7 +284,7 @@ def build_cache(pokemon):
 
     return {"words": words, "idf": idf, "tfidf": tfidf}
 
-#-----top words in order of tf-idf
+#-----top words in order of tf-idf-----
 def get_top_tfidf_words(scores, n=5):
     #sorts by score then alphabet in case of ties
     return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:n]
@@ -375,7 +368,7 @@ def search_menu(imported_pokedex):
             break
         print("Please enter at least one word.\n")
 
-    query = sorted(set(query)) #reemove repeated words
+    query = sorted(set(query)) #remove repeated words
     cache = imported_pokedex[2]
     idf = cache["idf"]
 
@@ -447,7 +440,8 @@ def find_similar(pokemon, number, tfidf):
 #-----ask user for pokemon and return the number & entry, or error -----
 def ask_user_for_pokemon(pokemon):
     while True:
-        user_pokemon = input("enter a Pokémon name or a Pokédex number "
+        print("Pokédex Search System")
+        user_pokemon = input("Enter a Pokémon name or a Pokédex number "
                              "(or 0 to return to the main menu):\n").strip()
         if user_pokemon=="0":
             return None
@@ -476,53 +470,58 @@ def similar_menu(imported_pokedex):
     if not similar:
         print(f"\nNo Pokémon match your search criteria of {entry['name']}.\n")
     else:
-        print(f"\nMost similar:")
-        for rank, (number, name, score) in enumerate(similar, start=1):
-            print(f"{rank}. #{number:03d} {name} (score {score:.4f})")
+        print(f"Most similar:")
+        for rank, (similar_number, name, score) in enumerate(similar, start=1):
+            print(f"{rank}. #{similar_number:03d} {name} (score {score:.4f})")
 
     print()
     input("Press enter to return to the main menu.\n")
 
 
 #---main menu:---
-#allow user to select valid menu option
+def main():
+    pokedex = None #empty until user imports
 
-while True:
-    selected_menu_item = input("Select an option:\n"
-                               "1. Import a Pokédex from a text file.\n"
-                               "2. Print a summary report.\n"
-                               "3. Output the summary report to a text file.\n"
-                               "4. View details of a Pokémon.\n"
-                               "5. Search the Pokédex.\n"
-                               "6. Find similar Pokémon.\n"
-                               "0. Exit.\n").strip()
+    #allow user to select valid menu option
+    while True:
+        selected_menu_item = input("Select an option:\n"
+                                   "1. Import a Pokédex from a text file.\n"
+                                   "2. Print a summary report.\n"
+                                   "3. Output the summary report to a text file.\n"
+                                   "4. View details of a Pokémon.\n"
+                                   "5. Search the Pokédex.\n"
+                                   "6. Find similar Pokémon.\n"
+                                   "0. Exit.\n").strip()
 
-    if selected_menu_item == "1":
-        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokémon.txt), "
-                                      "or 0 to return to the main menu:\n ").strip())
-        #validation for imported pokedex
-        if result is not None:
-            pokedex = result
+        if selected_menu_item == "1":
+            result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokémon.txt), "
+                                          "or 0 to return to the main menu:\n ").strip())
+            #validation for imported pokedex
+            if result is not None:
+                pokedex = result
 
-    elif selected_menu_item == "2":
-        print_summary(pokedex)
+        elif selected_menu_item == "2":
+            print_summary(pokedex)
 
-    elif selected_menu_item == "3":
-        save_summary_file(pokedex)
+        elif selected_menu_item == "3":
+            save_summary_file(pokedex)
 
-    elif selected_menu_item == "4":
-        print_pokemon(pokedex)
+        elif selected_menu_item == "4":
+            print_pokemon(pokedex)
 
-    elif selected_menu_item == "5":
-        search_menu(pokedex)
+        elif selected_menu_item == "5":
+            search_menu(pokedex)
 
-    elif selected_menu_item == "6":
-        similar_menu(pokedex)
+        elif selected_menu_item == "6":
+            similar_menu(pokedex)
 
-    #exit program
-    elif selected_menu_item == "0":
-        sys.exit()
+        #exit program
+        elif selected_menu_item == "0":
+            sys.exit()
 
-    #invalid option
-    else :
-        print("Please select a valid option.\n")
+        #invalid option
+        else:
+            print("Please select a valid option.\n")
+
+if __name__ == "__main__":
+    main()
