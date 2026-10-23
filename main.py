@@ -411,9 +411,9 @@ def find_similar(pokemon, number, idf):
         if similarity > 0: #don't include similarity score of 0
             results.append((n, entry["name"], similarity))
 
-        #highest similarity ordered first, then by lowest pokedex number for ties
-        results.sort(key=lambda sr: (-sr[2], sr[0]))
-        return results[:3]
+    #highest similarity ordered first, then by lowest pokedex number for ties
+    results.sort(key=lambda sr: (-sr[2], sr[0]))
+    return results[:3]
 
 #-----ask user for pokemon and return the number & entry, or error -----
 def ask_user_for_pokemon(pokemon):
