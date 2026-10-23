@@ -92,7 +92,7 @@ def parse_pokedex(pokedex):
         pokemon[number] = {"name": name, "types": types, "description": description}
 
     print(f"{title} imported successfully.")
-    return title, pokemon
+    return title, pokemon, build_cache(pokemon)
 
 def import_pokedex(user_file):
     raw_pokedex = user_file.strip() #remove whitespace
@@ -133,13 +133,6 @@ def get_entry_words(entry):
         words.extend(clean_words(line)) #put all words into lowercase
     return words
 
-#-----get all words in pokedex-----
-def get_all_words(pokemon):
-    words = []
-    for entry in pokemon.values():
-       words.extend(get_entry_words(entry))
-    return words
-
 #-----counting distinct words in pokedex descriptions-----
 def count_distinct_words(all_words):
     distinct_words = len(set(all_words)) #set only stores unique items, len gives num of items in set
@@ -164,24 +157,25 @@ def sort_pokemon_by_type(pokemon):
     sorted_types = sorted(type_counts.items(), key=lambda item: (-item[1], item[0]))
     return sorted_types
 
-
 #-----building summary of pokedex as a string-----
 def build_summary(imported_pokedex):
-    title, pokemon = imported_pokedex #tuple unpacking
-    all_words = get_all_words(pokemon)
+    title, pokemon, cache = imported_pokedex #tuple unpacking
+
+    all_words = []
+    for words in cache["words"].values():
+        all_words.extend(words)
+
     top_words = get_top_words(all_words)
     sorted_types = sort_pokemon_by_type(pokemon)
 
     #get total number of pokemon
-    total_pokemon = len(imported_pokedex[1]) #dictionary of pokemon
+    total_pokemon = len(pokemon) #dictionary of pokemon
 
     #get total number of words in all descriptions
     total_words_count = len(all_words)
 
     #get total number of distinct words
     distinct_words = count_distinct_words(all_words)
-
-    n = 1
 
     #build string
     lines = []
@@ -190,7 +184,7 @@ def build_summary(imported_pokedex):
     lines.append(f"Total number of words: {total_words_count}")
     lines.append(f"Number of distinct words: {distinct_words}")
     lines.append("")
-    lines.append("Top 10 words:")
+    lines.append("Top 10 Words:")
     for n, (word, count) in enumerate(top_words, start=1):
         lines.append(f"{n}. {word}: {count}")
     lines.append("")
@@ -285,10 +279,22 @@ def calculate_tfidf_words(entry, idf):
         scores[word] = tf * idf[word]
     return scores
 
+#-----cache everything on pokedex import-----
+def build_cache(pokemon):
+    idf = calculate_idf(pokemon) #same for whole file - only need it once
+
+    words = {} #all words in each pokemons description
+    tfidf = {} #tf-idf of every word in each pokemons description
+
+    for number, entry in pokemon.items():
+        words[number] = get_entry_words(entry)
+        tfidf[number] = calculate_tfidf_words(entry, idf)
+
+    return {"words": words, "idf": idf, "tfidf": tfidf}
+
 #-----top words in order of tf-idf
-def get_top_tfidf_words(entry, idf, n=5):
+def get_top_tfidf_words(scores, n=5):
     #sorts by score then alphabet in case of ties
-    scores = calculate_tfidf_words(entry, idf)
     return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:n]
 
 #-----find pokemon from user input-----
@@ -313,6 +319,7 @@ def print_pokemon(imported_pokedex):
         return
 
     pokemon = imported_pokedex[1]
+    cache = imported_pokedex[2]
 
     #ask user for pokemon, return None if exited
     result = ask_user_for_pokemon(pokemon)
@@ -320,8 +327,8 @@ def print_pokemon(imported_pokedex):
         return
 
     number, entry = result
-    words = get_entry_words(entry)
-    idf = calculate_idf(pokemon)
+    words = cache["words"][number]
+    scores = cache["tfidf"][number]
 
     #format output
     print(f"\n#{number:03d} {entry['name']}") #ensure number is 3 dec places (0s before)
@@ -334,7 +341,7 @@ def print_pokemon(imported_pokedex):
         print(f"{num}. {word}: {count}")
 
     print("\nTop TF-IDF keywords:")
-    for num, (word, score) in enumerate(get_top_tfidf_words(entry, idf), start=1):
+    for num, (word, score) in enumerate(get_top_tfidf_words(scores), start=1):
         print(f"{num}. {word}: {score:.4f}")
 
     print()
@@ -344,7 +351,7 @@ def print_pokemon(imported_pokedex):
 def search_pokedex(pokemon, query, idf):
     search_results = []
     for number, entry in pokemon.items():
-        scores = calculate_tfidf_words(entry, idf)
+        scores = tfidf[number]
         total = sum(scores.get(w, 0) for w in query)
         if total > 0: #score of 0 to be ignored
             search_results.append((number, entry["name"], total))
@@ -370,14 +377,15 @@ def search_menu(imported_pokedex):
         print("Please enter at least one word.\n")
 
     query = sorted(set(query)) #reemove repeated words
-    idf = calculate_idf(pokemon)
+    cache = imported_pokedex[2]
+    idf = cache["idf"]
 
     #words that don't appear at all
     not_found = [w for w in query if w not in idf]
     if not_found:
         print(f"\nNot found in Pokedex: {', '.join(not_found)}")
 
-    result = search_pokedex(pokemon, query, idf)
+    result = search_pokedex(pokemon, query, cache["tfidf"])
 
     if not result:
         print("\nNo Pokemon match your search criteria.\n")
@@ -422,14 +430,14 @@ def cosine_similarity(scores1, scores2):
     return overlap_sum / (total1 * total2)
 
 #-----find the 3 most similar pokemon to the entered one-----
-def find_similar(pokemon, number, idf):
-    target = calculate_tfidf_words(pokemon[number], idf)
+def find_similar(pokemon, number, tfidf):
+    target = tfidf[number]
     results = []
 
     for n, entry in pokemon.items():
         if n == number: #don't compare pokemon to itself
             continue
-        similarity = cosine_similarity(target, calculate_tfidf_words(entry, idf))
+        similarity = cosine_similarity(target, tfidf[n])
         if similarity > 0: #don't include similarity score of 0
             results.append((n, entry["name"], similarity))
 
@@ -463,8 +471,8 @@ def similar_menu(imported_pokedex):
         return
     number, entry = result
 
-    idf = calculate_idf(pokemon)
-    similar = find_similar(pokemon, number, idf)
+    cache = imported_pokedex[2]
+    similar = find_similar(pokemon, number, cache["tfidf"])
 
     if not similar:
         print(f"\nNo Pokemon match your search criteria of {entry['name']}.\n")
