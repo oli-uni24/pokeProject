@@ -17,24 +17,24 @@ def parse_header(header):
     #tuple unpacking
     poke_num, space, name = header[1:].partition(" ")
 
-    if space != " " or not poke_num.isdigit() or not name.strip():
+    if space != " " or not poke_num.isdecimal() or not name.strip():
         return None #not a valid header
 
     #valid header - returns number and name of Pokémon
     return int(poke_num), name.strip()
 
 
-def parse_pokedex(pokedex):
+def parse_pokedex(text):
     #ignore empty lines
-    lines = [line.strip() for line in pokedex.split("\n") if line.strip()]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
 
     #must not be empty and start with POKEDEX:
-    if not lines or lines[0][:8] != "POKEDEX:":
+    if not lines or lines[0].startswith("POKEDEX:"):
         print("Invalid Pokédex: first line must be POKEDEX: "
               "followed by a title.\n")
         return None
 
-    title = lines[0][8:].strip()
+    title = lines[0][len("POKEDEX:"):].strip()
 
     #store Pokémon as a dictionary
     pokemon = {}
@@ -50,7 +50,7 @@ def parse_pokedex(pokedex):
     while i < len(lines):
         header = parse_header(lines[i])
         if header is None:
-            print("Invalid Pokédex: expected an entry header containing the Pokémon name and number,"
+            print("Invalid Pokédex: expected an entry header containing the Pokémon name and number, "
                   "(e.g. #004 Charmander).\n")
             return None
 
@@ -62,24 +62,24 @@ def parse_pokedex(pokedex):
         i += 1
 
         #check type exists
-        if (i >= len(lines)) or (lines[i][:5]!="Type:"):
-            print (f"Invalid Pokédex: missing Type for {name}.\n")
+        if (i >= len(lines)) or (lines[i].startswith("Type:")):
+            print(f"Invalid Pokédex: missing Type for {name}.\n")
             return None
 
         #check valid number of types
-        types = [t.strip() for t in lines[i][5:].split("/")]
+        types = [t.strip() for t in lines[i][len("Type:"):].split("/")]
         if len(types) > 2 or "" in types:
-            print (f"Invalid Pokédex: incorrect number of types for {name}.\n")
+            print(f"Invalid Pokédex: incorrect number of types for {name}.\n")
             return None
         i += 1
 
-        #description - everything left up to net header or eof
+        #description - everything left up to next header or eof
         description = []
         while i < len(lines) and parse_header(lines[i]) is None:
             description.append(lines[i].strip())
             i += 1
         if not description:
-            print (f"Invalid Pokédex: no description for {name}.\n")
+            print(f"Invalid Pokédex: no description for {name}.\n")
             return None
 
         #check for duplicate numbers or name
@@ -103,7 +103,7 @@ def import_pokedex(user_file):
             return None
 
         #check valid filename
-        if raw_pokedex[-4:] != ".txt":
+        if not raw_pokedex.lower().endswith(".txt"):
             raw_pokedex = input("Please ensure the provided file is a text file (e.g. myFavouritePokémon.txt), "
                             "or press 0 to return to the main menu.\n").strip() #remove whitespace
             continue
@@ -111,19 +111,20 @@ def import_pokedex(user_file):
         #check file exists on disk
         try:
             #open utf-8 file
-            with open(raw_pokedex, "r", encoding="utf-8") as file:
+            with open(raw_pokedex, "r", encoding="utf-8-sig") as file:
                 data = file.read()
         except FileNotFoundError:
             raw_pokedex = input("File could not be found. Please ensure the provided file exists, "
                             "or press 0 to return to the main menu.\n").strip() #remove whitespace
             continue
+        except OSError:
+            print("File could not be opened.\n")
+            return None
         except UnicodeDecodeError:
             print("File is not valid UTF-8.\n")
             return None
 
-        imported_pokemon = parse_pokedex(data)
-        return imported_pokemon
-
+        return parse_pokedex(data)
 
 #----menu option 2:----
 #-----get all words in one entry-----
@@ -300,7 +301,7 @@ def get_top_tfidf_words(scores, n=5):
 #-----find pokemon from user input-----
 def find_pokemon(pokemon, query):
     #if user asks for pokemon by its number
-    if query.isdigit():
+    if query.isdecimal():
         number = int(query)
         if number in pokemon:
             return number, pokemon[number]
@@ -348,7 +349,7 @@ def print_pokemon(imported_pokedex):
     input("Press enter to return to the main menu.\n")
 
 #---menu option 5:---
-def search_pokedex(pokemon, query, idf):
+def search_pokedex(pokemon, query, tfidf):
     search_results = []
     for number, entry in pokemon.items():
         scores = tfidf[number]
@@ -363,7 +364,7 @@ def search_pokedex(pokemon, query, idf):
 #-----search menu/ui-----
 def search_menu(imported_pokedex):
     if imported_pokedex is None:
-        print("No Pokedex was provided. Please import one first (option 1).\n")
+        print("No Pokédex was provided. Please import one first (option 1).\n")
         input("Press enter to return to the main menu.\n")
         return
 
@@ -383,12 +384,12 @@ def search_menu(imported_pokedex):
     #words that don't appear at all
     not_found = [w for w in query if w not in idf]
     if not_found:
-        print(f"\nNot found in Pokedex: {', '.join(not_found)}")
+        print(f"\nNot found in Pokédex: {', '.join(not_found)}")
 
     result = search_pokedex(pokemon, query, cache["tfidf"])
 
     if not result:
-        print("\nNo Pokemon match your search criteria.\n")
+        print("\nNo Pokémon match your search criteria.\n")
     else:
         print("\nBest matches:")
         for rank, (number, name, score) in enumerate(result, start=1):
@@ -448,19 +449,19 @@ def find_similar(pokemon, number, tfidf):
 #-----ask user for pokemon and return the number & entry, or error -----
 def ask_user_for_pokemon(pokemon):
     while True:
-        user_pokemon = input("enter a Pokemon name or a Pokedex number "
+        user_pokemon = input("enter a Pokémon name or a Pokédex number "
                              "(or 0 to return to the main menu):\n").strip()
         if user_pokemon=="0":
             return None
         result = find_pokemon(pokemon, user_pokemon)
         if result is not None:
             return result
-        print("Pokemon not found, please check the name or number.\n")
+        print("Pokémon not found, please check the name or number.\n")
 
 #-----actual menu function-----
 def similar_menu(imported_pokedex):
     if imported_pokedex is None:
-        print("No Pokedex was provided. Please import one first (option 1).\n")
+        print("No Pokédex was provided. Please import one first (option 1).\n")
         input("Press enter to return to the main menu.\n")
         return
 
@@ -475,7 +476,7 @@ def similar_menu(imported_pokedex):
     similar = find_similar(pokemon, number, cache["tfidf"])
 
     if not similar:
-        print(f"\nNo Pokemon match your search criteria of {entry['name']}.\n")
+        print(f"\nNo Pokémon match your search criteria of {entry['name']}.\n")
     else:
         print(f"\nMost similar:")
         for rank, (number, name, score) in enumerate(similar, start=1):
@@ -496,10 +497,11 @@ while True:
                                "4. View details of a Pokémon.\n"
                                "5. Search the Pokédex.\n"
                                "6. Find similar Pokémon.\n"
-                               "0. Exit.\n")
+                               "0. Exit.\n").strip()
 
     if selected_menu_item == "1":
-        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokémon.txt):\n "))
+        result = import_pokedex(input("Please enter the name of the .txt file containing the Pokédex (e.g. myFavouritePokémon.txt), "
+                                      "or 0 to return to the main menu:\n ").strip())
         #validation for imported pokedex
         if result is not None:
             pokedex = result
